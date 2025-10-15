@@ -23,7 +23,7 @@ val singlePromptExecutorWithProxy = SingleLLMPromptExecutor(
 
 val openRouterExecutor = SingleLLMPromptExecutor(
     llmClient = OpenRouterLLMClient(
-        apiKey = "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"
+        apiKey = ""
     )
 )
 
@@ -33,7 +33,7 @@ val multipleLLMExecutor = MultiLLMPromptExecutor(
         baseClient = httpClientWithProxy
     ),
     LLMProvider.OpenRouter to OpenRouterLLMClient(
-        apiKey = "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"
+        apiKey = ""
     )
 )
 

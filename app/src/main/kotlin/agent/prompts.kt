@@ -6,10 +6,15 @@ This module contains all prompt templates used across the research workflow comp
 including user clarification, research brief generation, and report synthesis.
  */
 
-fun clarifyWithUserInstructions(): String = """
+/**
+ *  FIXME: prompts include JSON Schemas definitions, change to camelCase naming
+ */
+
+// FIXME List<Message>
+fun clarifyWithUserInstructions(messages: List<String>): String = """
 These are the messages that have been exchanged so far from the user asking for the report:
 <Messages>
-{messages}
+$messages
 </Messages>
 
 Today's date is {date}.
@@ -46,16 +51,16 @@ For the verification message when no clarification is needed:
 - Keep the message concise and professional
 """.trimIndent()
 
-fun transformMessagesIntoResearchTopicPrompt(): String = """
+fun transformMessagesIntoResearchTopicPrompt(messages: List<String>, date: String): String = """
 You will be given a set of messages that have been exchanged so far between yourself and the user.
 Your job is to translate these messages into a more detailed and concrete research question that will be used to guide the research.
 
 The messages that have been exchanged so far between yourself and the user are:
 <Messages>
-{messages}
+$messages
 </Messages>
 
-Today's date is {date}.
+Today's date is ${date}.
 
 You will return a single research question that will be used to guide the research.
 
@@ -137,7 +142,7 @@ After each search tool call, use think_tool to analyze the results:
 </Show Your Thinking>
 """.trimIndent()
 
-fun summarizeWebpagePrompt() = """
+fun summarizeWebpagePrompt(webPageContent: String) = """
 You are tasked with summarizing the raw content of a webpage retrieved from a web search. Your goal is to create a 
 summary that preserves the most important information from the original web page. This summary will be used by a 
 downstream research agent, so it's crucial to maintain the key details without losing essential information.
@@ -145,7 +150,7 @@ downstream research agent, so it's crucial to maintain the key details without l
 Here is the raw content of the webpage:
 
 <webpage_content>
-{webpage_content}
+$webPageContent
 </webpage_content>
 
 Please follow these guidelines to create your summary:
@@ -199,9 +204,9 @@ Remember, your goal is to create a summary that can be easily understood and uti
 Today's date is {date}.
 """.trimIndent()
 
-fun researchAgentPromptWithMcp() = """
+fun researchAgentPromptWithMcp(date: String) = """
 You are a research assistant conducting research on the user's input topic using local files. For context, today's 
-date is {date}.
+date is ${date}.
 
 <Task>
 Your job is to use file system tools to gather information from local research files.
@@ -252,9 +257,9 @@ After reading files, use think_tool to analyze what you found:
 - Always cite which files you used for your information
 </Show Your Thinking>""".trimIndent()
 
-fun leadResearcherPrompt(): String = """
+fun leadResearcherPrompt(date: String): String = """
 You are a research supervisor. Your job is to conduct research by calling the "ConductResearch" tool. For context, 
-today's date is {date}.
+today's date is ${date}.
 
 <Task>
 Your focus is to call the "ConductResearch" tool to conduct research against the overall research question passed in by the user. 
@@ -361,10 +366,10 @@ The report should be structured like this:
 Critical Reminder: It is extremely important that any information that is even remotely relevant to the user's research topic is preserved verbatim (e.g. don't rewrite it, don't summarize it, don't paraphrase it).
 """.trimIndent()
 
-fun compressResearchHumanMessage(): String = """
+fun compressResearchHumanMessage(researchTopic: String): String = """
 All above messages are about research conducted by an AI Researcher for the following research topic:
 
-RESEARCH TOPIC: {research_topic}
+RESEARCH TOPIC: $researchTopic
 
 Your task is to clean up these research findings while preserving ALL information that is relevant to answering this specific research question. 
 
@@ -378,10 +383,10 @@ CRITICAL REQUIREMENTS:
 
 The cleaned findings will be used for final report generation, so comprehensiveness is critical.""".trimIndent()
 
-fun finalReportGenerationPrompt(): String = """Based on all the research conducted, create a comprehensive, 
-    well-structured answer to the overall research brief:
+fun finalReportGenerationPrompt(researchBrief: String, findings: List<String>): String = """
+Based on all the research conducted, create a comprehensive, well-structured answer to the overall research brief:
 <Research Brief>
-{research_brief}
+$researchBrief
 </Research Brief>
 
 CRITICAL: Make sure the answer is written in the same language as the human messages!
@@ -392,7 +397,7 @@ Today's date is {date}.
 
 Here are the findings from the research that you conducted:
 <Findings>
-{findings}
+$findings
 </Findings>
 
 Please create a detailed answer to the overall research brief that:
@@ -457,7 +462,7 @@ Format the report in clear markdown with proper structure and include source ref
 </Citation Rules>
 """.trimIndent()
 
-fun BRIEF_CRITERIA_PROMPT() = """
+fun briefCriteriaPrompt(criterion: String, researchBrief: String) = """
 <role>
 You are an expert research brief evaluator specializing in assessing whether generated research briefs accurately capture user-specified criteria without loss of important details.
 </role>
@@ -471,11 +476,11 @@ Research briefs are critical for guiding downstream research agents. Missing or 
 </evaluation_context>
 
 <criterion_to_evaluate>
-{criterion}
+$criterion
 </criterion_to_evaluate>
 
 <research_brief>
-{research_brief}
+$researchBrief
 </research_brief>
 
 <evaluation_guidelines>
@@ -522,7 +527,7 @@ Judgment: NOT CAPTURED - specific doorman requirement not mentioned
 5. Focus on whether a researcher could act on this criterion based on the brief alone
 </output_instructions>""".trimIndent()
 
-fun BRIEF_HALLUCINATION_PROMPT() = """
+fun briefHallucinationPrompt(researchBrief: String, successCriteria: String) = """
 ## Brief Hallucination Evaluator
 
 <role>
@@ -538,11 +543,11 @@ Research briefs should only include requirements, preferences, and constraints t
 </evaluation_context>
 
 <research_brief>
-{research_brief}
+$researchBrief
 </research_brief>
 
 <success_criteria>
-{success_criteria}
+$successCriteria
 </success_criteria>
 
 <evaluation_guidelines>
