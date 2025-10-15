@@ -14,26 +14,10 @@ import io.ktor.http.*
 
 val httpClientWithProxy = createHttpClientWithOptionalProxy(Config.PROXY_URL)
 
-val singlePromptExecutorWithProxy = SingleLLMPromptExecutor(
+val openAISinglePromptExecutor = SingleLLMPromptExecutor(
     OpenAILLMClient(
         apiKey = Config.OPENAI_API_KEY,
         baseClient = httpClientWithProxy
-    )
-)
-
-val openRouterExecutor = SingleLLMPromptExecutor(
-    llmClient = OpenRouterLLMClient(
-        apiKey = ""
-    )
-)
-
-val multipleLLMExecutor = MultiLLMPromptExecutor(
-    LLMProvider.OpenAI to OpenAILLMClient(
-        apiKey = Config.OPENAI_API_KEY,
-        baseClient = httpClientWithProxy
-    ),
-    LLMProvider.OpenRouter to OpenRouterLLMClient(
-        apiKey = ""
     )
 )
 
