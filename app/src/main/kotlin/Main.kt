@@ -1,5 +1,5 @@
 import agent.executor.openAISinglePromptExecutor
-import agent.scope.scopeStrategy
+import agent.scope.scopingStrategy
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.tools.ToolRegistry
@@ -16,7 +16,10 @@ suspend fun main(): Unit = run {
 
     val agent = AIAgent(
         promptExecutor = openAISinglePromptExecutor,
-        strategy = scopeStrategy,
+        strategy = scopingStrategy { assistantQuestion ->
+            println(assistantQuestion)
+            readln()
+        },
         agentConfig = agentConfig,
         toolRegistry = ToolRegistry.EMPTY
     ) {

@@ -12,9 +12,9 @@ including user clarification, research brief generation, and report synthesis.
 
 fun clarifyWithUserInstructions(messages: String, date: String): String = """
 These are the messages that have been exchanged so far from the user asking for the report:
-<Messages>
+<messages>
 $messages
-</Messages>
+</messages>
 
 Today's date is $date.
 

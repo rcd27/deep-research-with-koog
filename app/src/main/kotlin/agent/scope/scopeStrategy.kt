@@ -10,6 +10,7 @@ import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.message.Message
 import ai.koog.prompt.structure.StructureFixingParser
 import ai.koog.prompt.structure.StructuredResponse
+import ai.koog.prompt.xml.xml
 import java.util.*
 
 @Tool
@@ -18,42 +19,49 @@ fun getTodayStr(): String {
     return Date().toLocaleString()
 }
 
-val scopeStrategy = strategy<String, String>("scope-strategy") {
+
+fun scopingStrategy(askUser: suspend (String) -> String) = strategy<String, String>("scope-strategy") {
     /**
      *     Determine if the user's request contains sufficient information to proceed with research.
      *
      *     Uses structured output to make deterministic decisions and avoid hallucination.
      *     Routes to either research brief generation or ends with a clarification question.
      */
-    val clarifyWithUser by node<String, ClarifyWithUser>("clarify_with_user") { initialInput ->
+    val clarifyWithUser by node<String, ClarifyWithUser>("clarify_with_user") { newInput ->
         llm.writeSession {
             val initialPrompt = prompt.copy()
             prompt = prompt("clarify_with_user_instructions") {
-                val combinedMessage = buildString {
-                    append("<previous_conversation>\n")
-                    initialPrompt.messages.forEach { message ->
-                        when (message) {
-                            is Message.System -> append("<user>\n${message.content}\n</user>\n")
-                            is Message.User -> append("<user>\n${message.content}\n</user>\n")
-                            is Message.Assistant -> append("<assistant>\n${message.content}\n</assistant>\n")
-                            is Message.Tool.Call -> append(
-                                "<tool_call tool=${message.tool}>\n${message.content}\n</tool_call>\n"
-                            )
+                val messageHistory = xml {
+                    tag("previous_conversation") {
+                        initialPrompt.messages.forEach { message ->
+                            when (message) {
+                                is Message.System -> tag("system") { +message.content }
+                                is Message.Tool.Result -> tag(
+                                    name = "tool_result",
+                                    attributes = linkedMapOf(
+                                        "tool" to message.tool
+                                    )
+                                ) { +message.content }
 
-                            is Message.Tool.Result -> append(
-                                "<tool_result tool=${message.tool}>\n${message.content}\n</tool_result>\n"
-                            )
+                                is Message.User -> tag(name = "user") { +message.content }
+                                is Message.Assistant -> tag("assistant") { +message.content }
+                                is Message.Tool.Call -> tag(
+                                    name = "tool_call",
+                                    attributes = linkedMapOf(
+                                        "tool" to message.tool
+                                    )
+                                ) { +message.content }
+                            }
                         }
                     }
-                    append("</previous_conversation>\n")
                 }
                 system(
                     clarifyWithUserInstructions(
-                        messages = combinedMessage,
+                        messages = messageHistory,
                         date = getTodayStr()
                     )
                 )
-                user(initialInput) // TODO: not sure if needed
+                user(newInput)
             }
 
             val result: ClarifyWithUser = requestLLMStructured<ClarifyWithUser>(
@@ -82,6 +90,21 @@ val scopeStrategy = strategy<String, String>("scope-strategy") {
         }
     }
 
+    val askUser by node<String, String>("ask_user") { question ->
+        val userAnswer = askUser(question)
+        llm.writeSession {
+            /**
+             *  We need to handle agent state manually when using LangGraph, storing, updating messages, etc.
+             *  With Koog it is more straightforward
+             */
+            updatePrompt {
+                assistant(question)
+                user(userAnswer)
+            }
+        }
+        userAnswer
+    }
+
     /**
      *     Transform the conversation history into a comprehensive research brief.
      *
@@ -92,17 +115,21 @@ val scopeStrategy = strategy<String, String>("scope-strategy") {
         TODO("Implement")
     }
 
-    edge(
-        nodeStart forwardTo clarifyWithUser
-    )
+    edge(nodeStart forwardTo clarifyWithUser)
 
     edge(
-        clarifyWithUser forwardTo nodeFinish onCondition { it.needClarification } transformed { it.question }
+        clarifyWithUser forwardTo askUser onCondition { it.needClarification } transformed { it.question }
     )
 
     edge(
         clarifyWithUser forwardTo writeResearchBrief onCondition { !it.needClarification } transformed { it.verification }
     )
 
+    edge(
+        writeResearchBrief forwardTo nodeFinish transformed { it.getOrThrow().structure.researchBrief }
+    )
 
+    edge(
+        askUser forwardTo clarifyWithUser
+    )
 }
