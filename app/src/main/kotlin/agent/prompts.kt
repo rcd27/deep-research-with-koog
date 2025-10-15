@@ -50,7 +50,7 @@ For the verification message when no clarification is needed:
 - Keep the message concise and professional
 """.trimIndent()
 
-fun transformMessagesIntoResearchTopicPrompt(messages: List<String>, date: String): String = """
+fun transformMessagesIntoResearchTopicPrompt(messages: String, date: String): String = """
 You will be given a set of messages that have been exchanged so far between yourself and the user.
 Your job is to translate these messages into a more detailed and concrete research question that will be used to guide the research.
 
