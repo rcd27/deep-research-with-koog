@@ -35,7 +35,7 @@ class ClarificationTest {
 
     @OptIn(DetachedPromptExecutorAPI::class)
     @Test
-    fun testChatStrategyDefaultName() = runTest {
+    fun `Test chat history is injected in system_prompt`() = runTest {
         val initialPrompt = prompt("id") {
             system("System message")
             user("User question")
