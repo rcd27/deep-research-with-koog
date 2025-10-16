@@ -6,7 +6,6 @@ import ai.koog.agents.core.agent.context.AIAgentLLMContext
 import ai.koog.agents.core.agent.context.DetachedPromptExecutorAPI
 import ai.koog.agents.core.agent.entity.FinishNode
 import ai.koog.agents.core.agent.entity.StartNode
-import ai.koog.agents.core.annotation.InternalAgentsApi
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import ai.koog.agents.core.environment.AIAgentEnvironment
 import ai.koog.agents.core.feature.pipeline.AIAgentGraphPipeline
@@ -34,7 +33,7 @@ class ClarificationTest {
         override fun now(): Instant = Instant.parse("2023-01-01T00:00:00Z")
     }
 
-    @OptIn(InternalAgentsApi::class, DetachedPromptExecutorAPI::class)
+    @OptIn(DetachedPromptExecutorAPI::class)
     @Test
     fun testChatStrategyDefaultName() = runTest {
         val initialPrompt = prompt("id") {
@@ -73,7 +72,7 @@ class ClarificationTest {
             environment = mockEnv,
             agentId = "test-agent",
             agentInputType = typeOf<String>(),
-            agentInput = "Hello",
+            agentInput = "Please make a deep research about my Honda",
             config = mockk(),
             llm = mockLLM,
             stateManager = mockk(),
@@ -110,7 +109,7 @@ class ClarificationTest {
             mockPromptExecutor.execute(
                 prompt = match {
                     // Check whether all message history is inlined into system_prompt
-                    (it.messages.size == 1) && (it.id == "clarify_with_user_instructions")
+                    (it.messages.size == 1) && (it.id == "clarify_with_user_instructions_prompt")
                 },
                 model = match {
                     it == initialModel

@@ -9,6 +9,7 @@ import ai.koog.prompt.llm.LLMProvider
 import io.ktor.client.*
 import io.ktor.client.engine.*
 import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.http.*
 
 
@@ -27,8 +28,11 @@ fun createHttpClientWithOptionalProxy(proxyUrl: String?): HttpClient {
             engine {
                 proxy = ProxyBuilder.http(Url(proxyUrl))
             }
+            install(HttpTimeout)
         }
     } else {
-        HttpClient(CIO)
+        HttpClient(CIO) {
+            install(HttpTimeout)
+        }
     }
 }

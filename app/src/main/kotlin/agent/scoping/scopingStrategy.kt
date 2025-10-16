@@ -3,6 +3,7 @@ package agent.scoping
 import agent.transformMessagesIntoResearchTopicPrompt
 import agent.utils.foldPromptMessages
 import ai.koog.agents.core.agent.entity.AIAgentNodeBase
+import ai.koog.agents.core.agent.entity.AIAgentStorageKey
 import ai.koog.agents.core.agent.entity.createStorageKey
 import ai.koog.agents.core.dsl.builder.forwardTo
 import ai.koog.agents.core.dsl.builder.strategy
@@ -18,7 +19,7 @@ fun getTodayStr(): String {
 }
 
 fun scopingStrategy(askUser: suspend (String) -> String) = strategy<String, String>("scope-strategy") {
-    val agentState = createStorageKey<AgentState>("agent-state")
+    val agentState: AIAgentStorageKey<AgentState> = createStorageKey<AgentState>("agent-state")
 
     val clarifyWithUser: AIAgentNodeBase<String, ClarifyWithUser> by clarification()
 
@@ -37,38 +38,7 @@ fun scopingStrategy(askUser: suspend (String) -> String) = strategy<String, Stri
         userAnswer
     }
 
-    /**
-     *     Transform the conversation history into a comprehensive research brief.
-     *
-     *     Uses structured output to ensure the brief follows the required format
-     *     and contains all necessary details for effective research.
-     */
-    val writeResearchBrief by node<String, ResearchQuestion>("write_research_brief") {
-        llm.writeSession {
-            val initialPrompt = prompt.copy()
-            prompt = prompt("write_research_brief") {
-                system(
-                    transformMessagesIntoResearchTopicPrompt(
-                        messages = initialPrompt.messages.foldPromptMessages(),
-                        date = getTodayStr()
-                    )
-                )
-            }
-            val result: ResearchQuestion = requestLLMStructured<ResearchQuestion>().getOrThrow().structure
-            storage.set(
-                agentState,
-                // FIXME: make sure this is the desired way of storing the state
-                AgentState(
-                    researchBrief = result.researchBrief,
-                    supervisorMessages = listOf(result.researchBrief),
-                    rawNotes = emptyList(),
-                    notes = emptyList(),
-                    finalReport = ""
-                )
-            )
-            result
-        }
-    }
+    val writeResearchBrief by writeResearchBrief(agentState)
 
     edge(nodeStart forwardTo clarifyWithUser)
 
