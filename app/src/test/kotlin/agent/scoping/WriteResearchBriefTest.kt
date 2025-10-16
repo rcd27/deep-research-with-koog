@@ -1,5 +1,6 @@
 package agent.scoping
 
+import agent.strategy.deepResearchStrategy
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.context.DetachedPromptExecutorAPI
 import ai.koog.agents.core.tools.ToolRegistry
@@ -7,6 +8,7 @@ import ai.koog.agents.testing.feature.withTesting
 import ai.koog.agents.testing.tools.getMockExecutor
 import ai.koog.agents.testing.tools.mockLLMAnswer
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
+import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
@@ -33,7 +35,7 @@ class WriteResearchBriefTest {
         val agent = AIAgent(
             mockLLMApi,
             OpenAIModels.CostOptimized.GPT4oMini,
-            strategy = scopingStrategy { question ->
+            strategy = deepResearchStrategy(mockk()) { question ->
                 "Hello"
             },
             toolRegistry = ToolRegistry.EMPTY

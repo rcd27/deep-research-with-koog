@@ -1,7 +1,6 @@
-package agent.scoping
+package agent.strategy
 
-import agent.transformMessagesIntoResearchTopicPrompt
-import agent.utils.foldPromptMessages
+import agent.scoping.*
 import ai.koog.agents.core.agent.entity.AIAgentNodeBase
 import ai.koog.agents.core.agent.entity.AIAgentStorageKey
 import ai.koog.agents.core.agent.entity.createStorageKey
@@ -9,7 +8,7 @@ import ai.koog.agents.core.dsl.builder.forwardTo
 import ai.koog.agents.core.dsl.builder.strategy
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import ai.koog.agents.core.tools.annotations.Tool
-import ai.koog.prompt.dsl.prompt
+import ai.koog.prompt.message.Message
 import java.util.*
 
 @Tool
@@ -18,7 +17,10 @@ fun getTodayStr(): String {
     return Date().toLocaleString()
 }
 
-fun scopingStrategy(askUser: suspend (String) -> String) = strategy<String, String>("scope-strategy") {
+fun deepResearchStrategy(
+    tavilySearchTool: ai.koog.agents.core.tools.Tool<*, *>,
+    askUser: suspend (String) -> String
+) = strategy<String, String>("scope-strategy") {
     val agentState: AIAgentStorageKey<AgentState> = createStorageKey<AgentState>("agent-state")
 
     val clarifyWithUser: AIAgentNodeBase<String, ClarifyWithUser> by clarification()
@@ -38,7 +40,16 @@ fun scopingStrategy(askUser: suspend (String) -> String) = strategy<String, Stri
         userAnswer
     }
 
-    val writeResearchBrief by writeResearchBrief(agentState)
+    val writeResearchBrief: AIAgentNodeBase<String, ResearchQuestion> by writeResearchBrief(agentState)
+
+    val searchWeb by node<ResearchQuestion, Message.Response> { researchQuestion ->
+        llm.writeSession {
+            updatePrompt {
+                system(researchQuestion.researchBrief)
+            }
+            requestLLMForceOneTool(tavilySearchTool)
+        }
+    }
 
     edge(nodeStart forwardTo clarifyWithUser)
 
@@ -47,14 +58,19 @@ fun scopingStrategy(askUser: suspend (String) -> String) = strategy<String, Stri
     )
 
     edge(
+        askUser forwardTo clarifyWithUser
+    )
+
+    edge(
         clarifyWithUser forwardTo writeResearchBrief onCondition { !it.needClarification } transformed { it.verification }
     )
 
     edge(
-        writeResearchBrief forwardTo nodeFinish transformed { it.researchBrief }
+        writeResearchBrief forwardTo searchWeb
     )
 
     edge(
-        askUser forwardTo clarifyWithUser
+        searchWeb forwardTo nodeFinish transformed { it.content }
     )
+
 }

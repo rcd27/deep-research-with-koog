@@ -1,6 +1,7 @@
 package agent.scoping
 
 import agent.clarifyWithUserInstructions
+import agent.strategy.getTodayStr
 import agent.utils.foldPromptMessages
 import ai.koog.agents.core.dsl.builder.AIAgentNodeDelegate
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase

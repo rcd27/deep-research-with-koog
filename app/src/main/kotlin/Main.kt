@@ -1,27 +1,50 @@
 import agent.executor.openAISinglePromptExecutor
-import agent.scoping.scopingStrategy
+import agent.strategy.deepResearchStrategy
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
-import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.features.opentelemetry.feature.OpenTelemetry
 import ai.koog.agents.features.opentelemetry.integration.langfuse.addLangfuseExporter
+import ai.koog.agents.mcp.McpToolRegistryProvider
+import ai.koog.agents.mcp.defaultStdioTransport
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
 
-suspend fun main(): Unit = run {
+suspend fun main() {
     val agentConfig = AIAgentConfig.withSystemPrompt(
         prompt = "You are deep research agent",
         maxAgentIterations = 50,
         llm = OpenAIModels.CostOptimized.GPT4oMini
     )
 
+    val tavilyMcpToolRegistry = run {
+        val tavilyMcpProcess = ProcessBuilder(
+            "env",
+            "TAVILY_API_KEY=${Config.TAVILY_API_KEY}",
+            "npx",
+            "-y",
+            "tavily-mcp@latest"
+        ).start()
+
+        val tavilyTransport = McpToolRegistryProvider.defaultStdioTransport(tavilyMcpProcess)
+
+        McpToolRegistryProvider.fromTransport(
+            transport = tavilyTransport,
+            name = "tavily-mcp",
+            version = "1.0.0"
+        )
+    }
+
+    val tavilySearchTool = tavilyMcpToolRegistry.tools.filter { it.name == "tavily-search" }[0]
+
     val agent = AIAgent(
         promptExecutor = openAISinglePromptExecutor,
-        strategy = scopingStrategy { assistantQuestion ->
+        strategy = deepResearchStrategy(
+            tavilySearchTool
+        ) { assistantQuestion ->
             println(assistantQuestion)
             readln()
         },
         agentConfig = agentConfig,
-        toolRegistry = ToolRegistry.EMPTY
+        toolRegistry = tavilyMcpToolRegistry
     ) {
         install(OpenTelemetry) {
             setVerbose(true) // to see system/user prompts

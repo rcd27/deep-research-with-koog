@@ -1,5 +1,6 @@
 package agent.scoping
 
+import agent.strategy.getTodayStr
 import agent.transformMessagesIntoResearchTopicPrompt
 import agent.utils.foldPromptMessages
 import ai.koog.agents.core.agent.entity.AIAgentStorageKey
@@ -28,17 +29,17 @@ fun AIAgentSubgraphBuilderBase<*, *>.writeResearchBrief(
             )
         }
         val result: ResearchQuestion = requestLLMStructured<ResearchQuestion>().getOrThrow().structure
-        storage.set(
-            agentStateKey,
-            // FIXME: make sure this is the desired way of storing the state
-            AgentState(
-                researchBrief = result.researchBrief,
-                supervisorMessages = listOf(result.researchBrief),
-                rawNotes = emptyList(),
-                notes = emptyList(),
-                finalReport = ""
-            )
-        )
+//        storage.set(
+//            agentStateKey,
+//            // FIXME: make sure this is the desired way of storing the state
+//            AgentState(
+//                researchBrief = result.researchBrief,
+//                supervisorMessages = listOf(result.researchBrief),
+//                rawNotes = emptyList(),
+//                notes = emptyList(),
+//                finalReport = ""
+//            )
+//        )
         result
     }
 }
