@@ -1,4 +1,4 @@
-package agent.scope
+package agent.scoping
 
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import kotlinx.serialization.Serializable
@@ -20,17 +20,6 @@ data class AgentState(
     val notes: List<String>,
     @property: LLMDescription("Final formatted research report")
     val finalReport: String
-)
-
-@Serializable
-@LLMDescription("Schema for user clarification decision and questions.")
-data class ClarifyWithUser(
-    @property: LLMDescription("Whether the user needs to be asked a clarifying question.")
-    val needClarification: Boolean,
-    @property: LLMDescription("A question to ask the user to clarify the report scope.")
-    val question: String,
-    @property: LLMDescription("Verify message that we will start research after the user has provided the necessary information.")
-    val verification: String
 )
 
 @Serializable

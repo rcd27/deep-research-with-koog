@@ -13,7 +13,7 @@ dependencies {
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 
   /** Koog */
-  implementation("ai.koog:koog-agents:0.5.0")
+  implementation("ai.koog:koog-agents:0.5.1")
 
   /** OpenTelemetry */
   implementation(platform("io.opentelemetry:opentelemetry-bom:1.53.0"))
@@ -38,12 +38,9 @@ dependencies {
 
   /** Tests */
   testImplementation(kotlin("test"))
-  testImplementation("ai.koog:agents-test:0.4.2")
-  testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
-  testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
   testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
-  testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.2")
-  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.2")
+  testImplementation("ai.koog:agents-test:0.5.1")
+  testImplementation("io.mockk:mockk:1.13.8")
 }
 
 kotlin {

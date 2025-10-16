@@ -1,5 +1,5 @@
 import agent.executor.openAISinglePromptExecutor
-import agent.scope.scopingStrategy
+import agent.scoping.scopingStrategy
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.tools.ToolRegistry
