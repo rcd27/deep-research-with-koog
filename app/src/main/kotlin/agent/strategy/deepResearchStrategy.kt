@@ -6,6 +6,9 @@ import ai.koog.agents.core.agent.entity.AIAgentStorageKey
 import ai.koog.agents.core.agent.entity.createStorageKey
 import ai.koog.agents.core.dsl.builder.forwardTo
 import ai.koog.agents.core.dsl.builder.strategy
+import ai.koog.agents.core.dsl.extension.nodeExecuteTool
+import ai.koog.agents.core.dsl.extension.nodeLLMSendToolResult
+import ai.koog.agents.core.dsl.extension.onToolCall
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import ai.koog.agents.core.tools.annotations.Tool
 import ai.koog.prompt.message.Message
@@ -47,30 +50,28 @@ fun deepResearchStrategy(
             updatePrompt {
                 system(researchQuestion.researchBrief)
             }
-            requestLLMForceOneTool(tavilySearchTool)
+            val response = requestLLMForceOneTool(tavilySearchTool)
+            response
         }
     }
 
+    val nodeExecuteTool by nodeExecuteTool()
+    val nodeSendToolResult by nodeLLMSendToolResult()
+
     edge(nodeStart forwardTo clarifyWithUser)
 
-    edge(
-        clarifyWithUser forwardTo askUser onCondition { it.needClarification } transformed { it.question }
-    )
+    // Scoping
+    edge(clarifyWithUser forwardTo askUser onCondition { it.needClarification } transformed { it.question })
+    edge(askUser forwardTo clarifyWithUser)
+    edge(clarifyWithUser forwardTo writeResearchBrief onCondition { !it.needClarification } transformed { it.verification })
+    edge(writeResearchBrief forwardTo searchWeb)
 
-    edge(
-        askUser forwardTo clarifyWithUser
-    )
-
-    edge(
-        clarifyWithUser forwardTo writeResearchBrief onCondition { !it.needClarification } transformed { it.verification }
-    )
-
-    edge(
-        writeResearchBrief forwardTo searchWeb
-    )
-
-    edge(
-        searchWeb forwardTo nodeFinish transformed { it.content }
-    )
+    // Research
+    // TODO: can be grouped in subgraph
+    edge(searchWeb forwardTo nodeExecuteTool onToolCall { true })
+    edge(nodeExecuteTool forwardTo nodeSendToolResult)
+    edge(nodeSendToolResult forwardTo nodeFinish transformed { it.content })
+    // FIXME: should force tool call in 146%
+    edge(searchWeb forwardTo nodeFinish onToolCall { false } transformed { it.content })
 
 }
