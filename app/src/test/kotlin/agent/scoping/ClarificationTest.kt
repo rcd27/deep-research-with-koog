@@ -87,7 +87,7 @@ class ClarificationTest {
             override val nodeFinish: FinishNode<String> = mockk()
         }
 
-        val clarificationNode by subgraphContext.clarification()
+        val clarificationNode by subgraphContext.clarifyWithUser()
 
         coEvery { mockPromptExecutor.execute(any(), any(), any()) } returns listOf(
             Message.Assistant(

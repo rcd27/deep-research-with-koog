@@ -16,7 +16,6 @@ import ai.koog.prompt.dsl.prompt
  *     and contains all necessary details for effective research.
  */
 fun AIAgentSubgraphBuilderBase<*, *>.writeResearchBrief(
-    agentStateKey: AIAgentStorageKey<AgentState>
 ): AIAgentNodeDelegate<String, ResearchQuestion> = node<String, ResearchQuestion>("write_research_brief") {
     llm.writeSession {
         val initialPrompt = prompt.copy()
@@ -29,17 +28,6 @@ fun AIAgentSubgraphBuilderBase<*, *>.writeResearchBrief(
             )
         }
         val result: ResearchQuestion = requestLLMStructured<ResearchQuestion>().getOrThrow().structure
-//        storage.set(
-//            agentStateKey,
-//            // FIXME: make sure this is the desired way of storing the state
-//            AgentState(
-//                researchBrief = result.researchBrief,
-//                supervisorMessages = listOf(result.researchBrief),
-//                rawNotes = emptyList(),
-//                notes = emptyList(),
-//                finalReport = ""
-//            )
-//        )
         result
     }
 }

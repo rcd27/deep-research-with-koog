@@ -29,7 +29,7 @@ data class ClarifyWithUser(
  *     Uses structured output to make deterministic decisions and avoid hallucination.
  *     Routes to either research brief generation or ends with a clarification question.
  */
-fun AIAgentSubgraphBuilderBase<*, *>.clarification(
+fun AIAgentSubgraphBuilderBase<*, *>.clarifyWithUser(
 ): AIAgentNodeDelegate<String, ClarifyWithUser> =
     node<String, ClarifyWithUser>("clarify_with_user_instructions") { nodeInput ->
         llm.writeSession {
